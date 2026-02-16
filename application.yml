@@ -7,18 +7,37 @@
 # Mettre ici tout ce qui est partagé.
 # ============================================================
 
-# ── Eureka : enregistrement de tous les services ─────────────
+# # ── Eureka : enregistrement de tous les services ─────────────
+# eureka:
+#   client:
+#     serviceUrl:
+#       defaultZone: http://eureka-server:8761/eureka/
+#     fetchRegistry: true
+#     registerWithEureka: true
+#   instance:
+#     prefer-ip-address: true
+#     lease-renewal-interval-in-seconds: 10
+#     lease-expiration-duration-in-seconds: 30
+
+
+# Configuration Eureka Client (Service Discovery)
 eureka:
   client:
-    serviceUrl:
+    service-url:
       defaultZone: http://eureka-server:8761/eureka/
-    fetchRegistry: true
-    registerWithEureka: true
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 10
+    initial-instance-info-replication-interval-seconds: 10
   instance:
     prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
-
+    metadata-map:
+      zone: primary
+      version: 1.0.0
+      
 # ── Config Cloud ─────────────────────────────────────────────
 spring:
   cloud:
