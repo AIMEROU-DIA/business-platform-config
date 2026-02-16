@@ -16,7 +16,6 @@ eureka:
     registerWithEureka: true
   instance:
   instance:
-    hostname: config-server
     instance-id: ${spring.application.name}:${server.port}
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 10
