@@ -1,0 +1,104 @@
+# ============================================================
+# api-gateway.yml — Configuration de l'API Gateway
+# Dépôt : business-platform-config (GitHub)
+#
+# Ce fichier est distribué par le config-server à api-gateway
+# au démarrage. Il complète application.yml.
+#
+# AJOUTER UN MICROSERVICE :
+# 1. Ajouter un bloc dans la section routes ci-dessous
+# 2. Pousser sur GitHub
+# 3. La gateway se met à jour automatiquement (pas de rebuild)
+# ============================================================
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+
+      # ── Découverte automatique via Eureka ─────────────────
+      # Crée automatiquement une route pour chaque service Eureka
+      # accessible via /NOM-SERVICE-EN-MINUSCULE/**
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      # ── Routes explicites MVP Phase 1 ─────────────────────
+      # lb:// = Load Balancer via Eureka (résolution dynamique)
+      routes:
+
+        # MS-01 — Utilisateurs & Authentification
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/utilisateurs/**
+
+        # MS-02 — Produits & Catalogue
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/produits/**
+
+        # MS-03 — Boutiques
+        - id: shop-service
+          uri: lb://shop-service
+          predicates:
+            - Path=/api/boutiques/**
+
+        # MS-04 — Inventaire
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/api/inventaire/**
+
+        # MS-05 — Commandes
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/commandes/**
+
+        # MS-06 — Paiements
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/paiements/**
+
+        # MS-12 — Avis & Évaluations
+        - id: review-service
+          uri: lb://review-service
+          predicates:
+            - Path=/api/avis/**
+
+      # ── CORS — autorise le frontend React ─────────────────
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - 'http://localhost:3000'
+              - 'http://localhost:4200'
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: '*'
+            allowCredentials: true
+            maxAge: 3600
+
+# ── Actuator ─────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      enabled: true

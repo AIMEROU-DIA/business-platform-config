@@ -1,0 +1,48 @@
+# ============================================================
+# application.yml — Config COMMUNE à tous les microservices
+# Dépôt : business-platform-config (GitHub)
+#
+# Ce fichier est automatiquement chargé par TOUS les services
+# avant leur propre fichier de configuration.
+# Mettre ici tout ce qui est partagé.
+# ============================================================
+
+# ── Eureka : enregistrement de tous les services ─────────────
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+    fetchRegistry: true
+    registerWithEureka: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# ── Config Cloud ─────────────────────────────────────────────
+spring:
+  cloud:
+    config:
+      fail-fast: true
+
+# ── Actuator — santé et métriques ────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+  endpoint:
+    health:
+      show-details: always
+  info:
+    env:
+      enabled: true
+
+# ── Logging ──────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.businessplatform: DEBUG
+    org.springframework.cloud: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
