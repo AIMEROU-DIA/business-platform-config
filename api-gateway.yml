@@ -34,10 +34,13 @@ spring:
       routes:
 
         # MS-01 — Utilisateurs & Authentification
+        # Routes : /api/utilisateurs/auth/**, /api/utilisateurs/profil/**, etc.
         - id: user-service
           uri: lb://user-service
           predicates:
             - Path=/api/utilisateurs/**
+          filters:
+            - StripPrefix=2
 
         # MS-02 — Produits & Catalogue
         - id: product-service
