@@ -35,8 +35,8 @@ spring:
 
         # MS-01 — Utilisateurs & Authentification
         # Routes : /api/utilisateurs/auth/**, /api/utilisateurs/profil/**, etc.
-        - id: user-service
-          uri: lb://user-service
+        - id: utilisateur-service
+          uri: lb://utilisateur-service
           predicates:
             - Path=/api/utilisateurs/**
           filters:
