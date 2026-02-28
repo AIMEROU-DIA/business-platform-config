@@ -33,13 +33,27 @@ spring:
       # lb:// = Load Balancer via Eureka (résolution dynamique)
       routes:
 
-        # MS-01 — Utilisateurs & Authentification
-        # Routes : /api/utilisateurs/**, /api/auth/**, /api/admin/**
-        # Pas de RewritePath car les contrôleurs ont déjà les bons préfixes
-        - id: utilisateur-service
+        # MS-01 — Utilisateurs & Authentification : Endpoints publics
+        # /api/auth/** : inscription, connexion, mot de passe oublié
+        - id: utilisateur-service-auth
           uri: lb://utilisateur-service
           predicates:
-            - Path=/api/utilisateurs/**, /api/auth/**, /api/admin/**
+            - Path=/api/auth/**
+          order: 1
+
+        # MS-01 — Utilisateurs : Profils et opérations utilisateurs
+        - id: utilisateur-service-users
+          uri: lb://utilisateur-service
+          predicates:
+            - Path=/api/utilisateurs/**
+          order: 2
+
+        # MS-01 — Administration : ADMIN et SUPER_ADMIN uniquement
+        - id: utilisateur-service-admin
+          uri: lb://utilisateur-service
+          predicates:
+            - Path=/api/admin/**
+          order: 3
 
         # MS-02 — Produits & Catalogue
         - id: product-service
@@ -78,12 +92,13 @@ spring:
             - Path=/api/avis/**
 
       # ── CORS — autorise le frontend React ─────────────────
+      # Note : Postman n'envoie pas d'Origin, donc pas de problème CORS avec Postman
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins:
-              - 'http://localhost:3000'
-              - 'http://localhost:4200'
+            allowedOriginPatterns:
+              - 'http://localhost:*'
+              - 'http://127.0.0.1:*'
             allowedMethods:
               - GET
               - POST
@@ -94,6 +109,9 @@ spring:
             allowedHeaders: '*'
             allowCredentials: true
             maxAge: 3600
+            exposedHeaders:
+              - 'Authorization'
+              - 'Content-Type'
 
 # ── Actuator ─────────────────────────────────────────────────
 management:
