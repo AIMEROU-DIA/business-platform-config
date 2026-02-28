@@ -34,14 +34,12 @@ spring:
       routes:
 
         # MS-01 — Utilisateurs & Authentification
-        # Routes : /api/utilisateurs/auth/**, /api/utilisateurs/profil/**, etc.
-        # RewritePath: /api/utilisateurs/XXX → /api/XXX
+        # Routes : /api/utilisateurs/**, /api/auth/**, /api/admin/**
+        # Pas de RewritePath car les contrôleurs ont déjà les bons préfixes
         - id: utilisateur-service
           uri: lb://utilisateur-service
           predicates:
-            - Path=/api/utilisateurs/**
-          filters:
-            - RewritePath=/api/utilisateurs/(?<segment>.*), /api/$\{segment}
+            - Path=/api/utilisateurs/**, /api/auth/**, /api/admin/**
 
         # MS-02 — Produits & Catalogue
         - id: product-service
