@@ -82,13 +82,13 @@ application:
     duree-validite-minutes: 5
     longueur: 6
     tentatives-max: 3
-    fournisseur: ${OTP_FOURNISSEUR:console}
+    fournisseur: ${OTP_FOURNISSEUR:twilio}
 
   # ===== TWILIO (prod uniquement) =====
   twilio:
-    compte-sid: ${TWILIO_COMPTE_SID:ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
-    jeton-auth: ${TWILIO_JETON_AUTH:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx}
-    numero-expediteur: ${TWILIO_NUMERO:+1234567890}
+    compte-sid: ${TWILIO_COMPTE_SID}
+    jeton-auth: ${TWILIO_JETON_AUTH}
+    numero-expediteur: ${TWILIO_NUMERO}
 
 # ===== LOGS =====
 logging:
