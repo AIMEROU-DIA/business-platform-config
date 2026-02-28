@@ -86,9 +86,9 @@ application:
 
   # ===== TWILIO (prod uniquement) =====
   twilio:
-    compte-sid: ${TWILIO_COMPTE_SID}
-    jeton-auth: ${TWILIO_JETON_AUTH}
-    numero-expediteur: ${TWILIO_NUMERO}
+    compte-sid: ${TWILIO_COMPTE_SID:}
+    jeton-auth: ${TWILIO_JETON_AUTH:}
+    numero-expediteur: ${TWILIO_NUMERO:}
 
 # ===== LOGS =====
 logging:
