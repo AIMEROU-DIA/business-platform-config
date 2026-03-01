@@ -82,7 +82,7 @@ application:
     duree-validite-minutes: 5
     longueur: 6
     tentatives-max: 3
-    fournisseur: ${OTP_FOURNISSEUR:console} # "console" pour dev, "twilio" pour prod
+    fournisseur: ${OTP_FOURNISSEUR:twilio}
 
   # ===== TWILIO (prod uniquement) =====
   twilio:
