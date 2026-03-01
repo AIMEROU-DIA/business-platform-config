@@ -82,13 +82,15 @@ application:
     duree-validite-minutes: 5
     longueur: 6
     tentatives-max: 3
-    fournisseur: ${OTP_FOURNISSEUR:twilio}
+    # MODE DEV : affiche l'OTP dans les logs au lieu d'envoyer un SMS
+    fournisseur: ${OTP_FOURNISSEUR:console}
 
-  # ===== TWILIO (prod uniquement) =====
-  twilio:
-    compte-sid: ${TWILIO_COMPTE_SID:}
-    jeton-auth: ${TWILIO_JETON_AUTH:}
-    numero-expediteur: ${TWILIO_NUMERO:}
+  # ===== TWILIO (MODE PRODUCTION - commenté pour dev) =====
+  # Décommenter et configurer pour l'environnement de production
+  # twilio:
+  #   compte-sid: ${TWILIO_COMPTE_SID:}
+  #   jeton-auth: ${TWILIO_JETON_AUTH:}
+  #   numero-expediteur: ${TWILIO_NUMERO:}
 
 # ===== LOGS =====
 logging:
