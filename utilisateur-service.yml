@@ -98,6 +98,9 @@ management:
   endpoint:
     health:
       show-details: always
+  health:
+    mail:
+      enabled: false  # Désactive le healthcheck SMTP en dev
   info:
     env:
       enabled: true
