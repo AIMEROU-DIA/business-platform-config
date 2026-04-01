@@ -38,6 +38,19 @@ spring:
     locations: classpath:db/migration
     schemas: public
 
+# ===== SPRINGDOC OPENAPI / SWAGGER =====
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    enabled: true
+    display-request-duration: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: false
+  use-fqn: true
+
 # ===== EUREKA – enregistrement du service =====
 eureka:
   client:
