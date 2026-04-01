@@ -49,7 +49,7 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
   show-actuator: false
-  use-fqn: true
+  use-fqn: false
 
 # ===== EUREKA – enregistrement du service =====
 eureka:
