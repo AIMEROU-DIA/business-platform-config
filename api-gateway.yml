@@ -122,3 +122,69 @@ management:
   endpoint:
     gateway:
       enabled: true
+
+# ============================================================
+# SÉCURITÉ JWT — Validation centralisée au Gateway
+# ============================================================
+#
+# La gateway valide le JWT UNE SEULE fois et injecte les
+# informations d'identité dans des headers HTTP enrichis :
+#
+#   X-User-Id         → 550e8400-e29b-41d4-a716-446655440000
+#   X-User-Phone      → 773456789
+#   X-User-Roles      → UTILISATEUR,VENDEUR
+#   X-User-Permissions → LIRE_PRODUIT,CREER_PRODUIT
+#
+# Les microservices lisent ces headers pour configurer le
+# SecurityContext (via le module commun-securite).
+#
+# IMPORTANT :
+# - La clé secrète DOIT être LA MÊME que celle de utilisateur-service
+# - Variable d'environnement JWT_SECRET recommandée en production
+# ============================================================
+
+application:
+  securite:
+    jwt:
+      # Clé secrète pour valider la signature JWT
+      # DOIT être identique à celle de utilisateur-service
+      # En production : utiliser la variable d'environnement ${JWT_SECRET}
+      cle-secrete: "${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}"
+
+      # Routes publiques (pas d'authentification requise)
+      # Syntaxe : chemins séparés par des virgules
+      # Wildcards supportés : /* et /**
+      routes-publiques:
+        /api/auth/inscription,
+        /api/auth/inscription/verifier-otp,
+        /api/auth/inscription/renvoyer-otp,
+        /api/auth/connexion,
+        /api/auth/jeton-rafraichissement,
+        /api/auth/mot-de-passe-oublie,
+        /api/auth/reinitialiser-mot-de-passe,
+        /actuator/**
+
+# ============================================================
+# NOTES DE CONFIGURATION
+# ============================================================
+#
+# AJOUTER UNE ROUTE PUBLIQUE :
+# Ajouter le chemin dans application.securite.jwt.routes-publiques
+#
+# TESTER LE FILTRE JWT :
+# 1. Sans token : curl http://localhost:8080/api/produits
+#    → 401 Unauthorized
+#
+# 2. Avec token invalide : curl -H "Authorization: Bearer abc123"
+#    → 401 Unauthorized
+#
+# 3. Avec token valide :
+#    curl -H "Authorization: Bearer <JWT_valide>" http://localhost:8080/api/produits
+#    → Les headers X-User-* sont ajoutés à la requête vers le microservice
+#
+# LOGS :
+# Activer les logs debug du filtre :
+# logging:
+#   level:
+#     com.platform.gateway.security: DEBUG
+# ============================================================
