@@ -1,0 +1,120 @@
+# ============================================================
+# produits-service.yml
+# Configuration centralisée pour MS-02 (Service Produits)
+# Gestion : catalogue produits, catégories, images, recherche
+# ============================================================
+
+server:
+  port: 8082
+
+spring:
+  application:
+    name: produits-service
+
+  # ──────────────────────────────────────────────────────────
+  # BASE DE DONNÉES — PostgreSQL
+  # ──────────────────────────────────────────────────────────
+  datasource:
+    url: jdbc:postgresql://${BDD_HOTE:localhost}:${BDD_PORT:5432}/${BDD_NOM:produits_db}
+    username: ${BDD_UTILISATEUR:postgres}
+    password: ${BDD_MOT_DE_PASSE:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ──────────────────────────────────────────────────────────
+  # JPA / HIBERNATE
+  # ──────────────────────────────────────────────────────────
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+  # ──────────────────────────────────────────────────────────
+  # ELASTICSEARCH
+  # ──────────────────────────────────────────────────────────
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    connection-timeout: 5s
+    socket-timeout: 30s
+
+  # ──────────────────────────────────────────────────────────
+  # REDIS (CACHE)
+  # ──────────────────────────────────────────────────────────
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  # 1 heure (en millisecondes)
+      cache-null-values: false
+
+# ──────────────────────────────────────────────────────────
+# EUREKA CLIENT
+# ──────────────────────────────────────────────────────────
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOTE:localhost}:${EUREKA_PORT:8761}/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# ──────────────────────────────────────────────────────────
+# ACTUATOR — ENDPOINTS DE SANTÉ
+# ──────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# ──────────────────────────────────────────────────────────
+# LOGGING
+# ──────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.plateforme.produits: DEBUG
+    org.springframework.data.elasticsearch: DEBUG
+    org.hibernate.SQL: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
