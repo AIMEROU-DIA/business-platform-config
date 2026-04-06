@@ -1,148 +1,122 @@
-# Configuration Repository - Teranga Biz Platform
+# Configuration Repository — Teranga Biz Platform
 
 Ce dépôt contient les configurations centralisées pour tous les microservices de la plateforme Teranga Biz.
+Il est chargé au démarrage par chaque service via le **Config Server** (Spring Cloud Config).
 
-## Structure des Configurations
+## Structure des fichiers
 
 ```
 configurations-teranga-biz/
-├── application.yml              # Configuration globale (tous les services)
-├── eureka-server.yml           # Service Discovery
-├── config-server.yml           # Config Server
-├── api-gateway.yml             # API Gateway + Security
-├── user-service.yml            # Users & Authentication
-├── .env.example                # Template variables d'environnement
-├── ARCHITECTURE.md             # Documentation architecture complète
-├── CORRECTIONS-RAPPORT.md      # Rapport des corrections appliquées
-└── README.md                   # Ce fichier
+├── application.yml           # Configuration globale (tous les services)
+├── config-server.yml         # Config Server (pointe vers ce dépôt Git)
+├── eureka-server.yml         # Service Discovery (Eureka)
+├── api-gateway.yml           # API Gateway + routage + sécurité JWT
+├── utilisateur-service.yml   # MS-01 — Utilisateurs & Authentification
+├── produits-service.yml      # MS-02 — Produits & Catalogue
+├── boutique-service.yml      # MS-03 — Boutiques personnalisées
+└── README.md                 # Ce fichier
 ```
 
-## Services Configurés
+## Services configurés
 
 | Service | Fichier | Port | Description |
 |---------|---------|------|-------------|
-| Eureka Server | `eureka-server.yml` | 8761 | Service Discovery |
-| Config Server | `config-server.yml` | 8888 | Configuration centralisée |
-| API Gateway | `api-gateway.yml` | 8080 | Point d'entrée, routing, sécurité |
-| User Service | `user-service.yml` | 8081 | Gestion utilisateurs & authentification |
+| Config Server | `config-server.yml` | 8888 | Distribution centralisée des configurations |
+| Eureka Server | `eureka-server.yml` | 8761 | Registre et découverte de services |
+| API Gateway | `api-gateway.yml` | 8080 | Point d'entrée unique, routage, sécurité JWT |
+| MS-01 Utilisateurs | `utilisateur-service.yml` | 8081 | Comptes, authentification, rôles, profils |
+| MS-02 Produits | `produits-service.yml` | 8082 | Catalogue, catégories, recherche Elasticsearch |
+| MS-03 Boutiques | `boutique-service.yml` | 8083 | Mini-boutiques personnalisées des vendeurs |
 
-## Configuration Globale (application.yml)
+## Plan de déploiement (phases)
 
-Contient les paramètres communs à tous les services :
-- Configuration Eureka Client
-- Configuration Spring Cloud Config
-- Configuration Actuator (monitoring)
-- Configuration logs
+### Phase 1 — MVP (en cours)
+- [x] MS-01 Utilisateurs & Authentification
+- [x] MS-02 Produits & Catalogue
+- [x] MS-03 Boutiques
+- [ ] MS-04 Inventaire
+- [ ] MS-05 Commandes
+- [ ] MS-06 Paiements
+- [ ] MS-12 Avis & Évaluations
 
-## Utilisation
+### Phase 2 — Social & Académie
+- [ ] MS-07 Social
+- [ ] MS-08 Messagerie
+- [ ] MS-09 Académie
+- [ ] MS-13 Certification & Gamification
+- [ ] MS-14 Intelligence Artificielle (basique)
 
-### 1. En développement local
+### Phase 3 — Avancé
+- [ ] MS-10 Partenaires
+- [ ] MS-11 Publicité
+- [ ] MS-14 Intelligence Artificielle (avancé)
+- [ ] MS-15 Statistiques & Analyses
 
-Chaque microservice charge automatiquement sa configuration depuis ce repository via le Config Server :
+## Comment ça fonctionne
+
+### Chargement au démarrage
+
+Chaque microservice charge sa configuration dans cet ordre :
+1. `application.yml` — paramètres communs (Eureka, Actuator, logs)
+2. `{nom-du-service}.yml` — paramètres spécifiques au service
 
 ```yaml
+# Dans chaque microservice (application.yml local)
 spring:
-  cloud:
-    config:
-      uri: http://config-server:8888
-      name: ${spring.application.name}
+  application:
+    name: boutique-service   # ← détermine quel fichier est chargé ici
+  config:
+    import: optional:configserver:http://config-server:8888
 ```
 
-### 2. Mise à jour des configurations
-
-1. Modifier le fichier de configuration souhaité
-2. Commit et push sur la branche `main`
-3. Les services rechargent automatiquement via Spring Cloud Config
+### Mettre à jour une configuration
 
 ```bash
-git add .
-git commit -m "update: configuration user-service"
+git add boutique-service.yml
+git commit -m "config: mise à jour boutique-service"
 git push origin main
+# Les services rechargent sans rebuild
 ```
 
-### 3. Rafraîchissement manuel (si nécessaire)
+### Rafraîchissement sans redémarrage (si @RefreshScope activé)
 
 ```bash
-# Déclencher le rechargement sans redémarrage
-curl -X POST http://localhost:8081/actuator/refresh
+curl -X POST http://localhost:8083/actuator/refresh
 ```
 
-## Variables d'Environnement
+## Ajouter un nouveau microservice
 
-Les informations sensibles sont gérées via variables d'environnement :
+1. Créer le fichier `{nom-service}.yml` dans ce dépôt
+2. Ajouter la route dans `api-gateway.yml` (section `routes`)
+3. Si le service a des endpoints publics, les ajouter dans `routes-publiques`
+4. Pousser sur GitHub — le Config Server distribue automatiquement
 
-### Secrets
-- `JWT_SECRET` : Clé secrète JWT (générer avec `openssl rand -hex 32`)
-- `POSTGRES_PASSWORD` : Mot de passe PostgreSQL
-- `REDIS_PASSWORD` : Mot de passe Redis
+## Variables d'environnement sensibles
 
-### Base de données
-- `POSTGRES_HOST` : Hôte PostgreSQL (défaut: `postgres`)
-- `POSTGRES_PORT` : Port PostgreSQL (défaut: `5432`)
-- `POSTGRES_DB` : Nom de la base (défaut: `postgres`)
-- `POSTGRES_USER` : Utilisateur PostgreSQL (défaut: `postgres`)
+Les secrets ne sont **jamais** stockés dans ce dépôt. Ils sont injectés via des variables d'environnement dans `docker-compose.yml` ou Kubernetes Secrets.
 
-### Configuration JPA
-- `DDL_AUTO` : Mode Hibernate (défaut: `validate`)
-  - `validate` : Production (vérifie le schéma)
-  - `update` : Développement (met à jour automatiquement)
-  - `create-drop` : Tests (recrée à chaque démarrage)
-
-Voir `.env.example` pour la liste complète.
+| Variable | Description | Défaut (dev) |
+|----------|-------------|--------------|
+| `JWT_SECRET` | Clé secrète JWT — doit être identique sur gateway + utilisateur-service | clé de dev |
+| `BDD_UTILISATEUR` | Utilisateur PostgreSQL | `postgres` |
+| `BDD_MOT_DE_PASSE` | Mot de passe PostgreSQL | `postgres` |
+| `SMTP_PASSWORD` | Clé API SendGrid / SMTP | vide |
+| `TWILIO_COMPTE_SID` | Compte Twilio (SMS OTP) | vide |
+| `TWILIO_JETON_AUTH` | Token Twilio | vide |
+| `OTP_FOURNISSEUR` | Mode OTP : `console` (dev) ou `twilio` / `email` (prod) | `console` |
 
 ## Sécurité
 
-### ⚠️ IMPORTANT - Production
-
-1. **Ne jamais commiter de secrets** dans ce repository
-2. Utiliser des variables d'environnement pour toutes les valeurs sensibles
-3. En production, utiliser :
-   - Secrets Kubernetes
-   - AWS Secrets Manager
-   - HashiCorp Vault
-   - Spring Cloud Config Encryption (optionnel)
-
-### Chiffrement (optionnel)
-
-Pour chiffrer les valeurs sensibles dans les fichiers YAML :
-
-```yaml
-# Config Server
-spring:
-  cloud:
-    config:
-      server:
-        encrypt:
-          enabled: true
-
-# Dans les fichiers de config
-password: '{cipher}AQBvzOcvVm...'
-```
-
-## Architecture Complète
-
-Voir `ARCHITECTURE.md` pour :
-- Diagramme d'architecture
-- Liste de tous les microservices planifiés
-- Plan de développement par phases
-- Bonnes pratiques appliquées
-
-## Rapport de Corrections
-
-Voir `CORRECTIONS-RAPPORT.md` pour :
-- Liste des incohérences détectées
-- Corrections appliquées
-- État final du système
-- Prochaines étapes
+- Ne jamais commiter de secrets ou mots de passe dans ce dépôt
+- En production : utiliser Kubernetes Secrets, AWS Secrets Manager ou HashiCorp Vault
+- La clé JWT doit être identique sur `api-gateway` et `utilisateur-service`
 
 ## Support
 
-- **Repository principal** : https://github.com/AIMEROU-DIA/plateforme-teranga-biz
-- **Configuration** : https://github.com/AIMEROU-DIA/configurations-teranga-biz
-- **Documentation** : `ARCHITECTURE.md`
+- Repository principal : https://github.com/AIMEROU-DIA/plateforme-teranga-biz
+- Configuration : https://github.com/AIMEROU-DIA/configurations-teranga-biz
 
 ---
 
-**Dernière mise à jour** : 2026-02-14  
-**Version** : 1.0.0-MVP  
-**Statut** : ✅ Production-ready
+**Dernière mise à jour** : 2026-04-06
+**Version** : 1.0.0-MVP

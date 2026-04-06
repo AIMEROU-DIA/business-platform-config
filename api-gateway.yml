@@ -56,40 +56,46 @@ spring:
           order: 3
 
         # MS-02 — Produits & Catalogue
-        - id: product-service
-          uri: lb://product-service
+        - id: produits-service
+          uri: lb://produits-service
           predicates:
             - Path=/api/produits/**
+          order: 4
 
         # MS-03 — Boutiques
-        - id: shop-service
-          uri: lb://shop-service
+        - id: boutique-service
+          uri: lb://boutique-service
           predicates:
             - Path=/api/boutiques/**
+          order: 5
 
         # MS-04 — Inventaire
-        - id: inventory-service
-          uri: lb://inventory-service
+        - id: inventaire-service
+          uri: lb://inventaire-service
           predicates:
             - Path=/api/inventaire/**
+          order: 6
 
         # MS-05 — Commandes
-        - id: order-service
-          uri: lb://order-service
+        - id: commandes-service
+          uri: lb://commandes-service
           predicates:
             - Path=/api/commandes/**
+          order: 7
 
         # MS-06 — Paiements
-        - id: payment-service
-          uri: lb://payment-service
+        - id: paiements-service
+          uri: lb://paiements-service
           predicates:
             - Path=/api/paiements/**
+          order: 8
 
         # MS-12 — Avis & Évaluations
-        - id: review-service
-          uri: lb://review-service
+        - id: avis-service
+          uri: lb://avis-service
           predicates:
             - Path=/api/avis/**
+          order: 9
 
       # ── CORS — autorise le frontend React ─────────────────
       # Note : Postman n'envoie pas d'Origin, donc pas de problème CORS avec Postman
@@ -162,6 +168,9 @@ application:
         /api/auth/jeton-rafraichissement,
         /api/auth/mot-de-passe-oublie,
         /api/auth/reinitialiser-mot-de-passe,
+        /api/boutiques,
+        /api/boutiques/recherche,
+        /api/boutiques/slug/**,
         /actuator/**
 
 # ============================================================
