@@ -1,0 +1,11 @@
+# ============================================================
+# boutique-service-prod.yml — Mode production
+# Profil : prod
+# ============================================================
+
+# Swagger désactivé en production
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

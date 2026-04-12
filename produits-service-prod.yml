@@ -1,0 +1,9 @@
+# ============================================================
+# produits-service-prod.yml — Mode production
+# Profil : prod
+# ============================================================
+
+# Logs Elasticsearch silencieux en production
+logging:
+  level:
+    org.springframework.data.elasticsearch: WARN

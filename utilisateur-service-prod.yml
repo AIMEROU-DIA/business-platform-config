@@ -1,0 +1,22 @@
+# ============================================================
+# utilisateur-service-prod.yml — Mode production
+# Profil : prod
+# ============================================================
+
+# Swagger désactivé en production
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+# OTP via email ou twilio en production
+application:
+  otp:
+    fournisseur: ${OTP_FOURNISSEUR:email}
+
+# Healthcheck mail activé en production
+management:
+  health:
+    mail:
+      enabled: true

@@ -1,0 +1,19 @@
+# ============================================================
+# api-gateway-dev.yml — API Gateway en mode développement
+# Profil : dev
+# ============================================================
+
+# CORS ouvert en dev (tous les origines localhost)
+spring:
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - 'http://localhost:*'
+              - 'http://127.0.0.1:*'
+            allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+            allowedHeaders: '*'
+            allowCredentials: true
+            maxAge: 3600

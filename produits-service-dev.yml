@@ -1,0 +1,9 @@
+# ============================================================
+# produits-service-dev.yml — Mode développement
+# Profil : dev
+# ============================================================
+
+# Logs Elasticsearch verbeux en dev
+logging:
+  level:
+    org.springframework.data.elasticsearch: DEBUG

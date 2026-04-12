@@ -115,7 +115,7 @@ info:
 application:
   securite:
     jwt:
-      cle-secrete: ${JWT_CLE_SECRETE:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      cle-secrete: ${JWT_CLE_SECRETE}
       expiration-jeton-acces: 900000
       expiration-jeton-rafraichissement: 604800000
 

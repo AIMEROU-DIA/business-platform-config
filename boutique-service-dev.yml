@@ -1,0 +1,9 @@
+# ============================================================
+# boutique-service-dev.yml — Mode développement
+# Profil : dev
+# ============================================================
+
+# Swagger activé en dev
+springdoc:
+  swagger-ui:
+    enabled: true

@@ -1,0 +1,20 @@
+# ============================================================
+# utilisateur-service-dev.yml — Mode développement
+# Profil : dev
+# ============================================================
+
+# Swagger activé en dev
+springdoc:
+  swagger-ui:
+    enabled: true
+
+# OTP en console par défaut en dev
+application:
+  otp:
+    fournisseur: ${OTP_FOURNISSEUR:console}
+
+# Healthcheck mail désactivé en dev
+management:
+  health:
+    mail:
+      enabled: false

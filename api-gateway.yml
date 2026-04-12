@@ -155,7 +155,7 @@ application:
       # Clé secrète pour valider la signature JWT
       # DOIT être identique à celle de utilisateur-service
       # En production : utiliser la variable d'environnement ${JWT_SECRET}
-      cle-secrete: "${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}"
+      cle-secrete: "${JWT_SECRET}"
 
       # Routes publiques (pas d'authentification requise)
       # Syntaxe : chemins séparés par des virgules

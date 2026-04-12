@@ -1,0 +1,23 @@
+# ============================================================
+# application-prod.yml — Surcharges communes à TOUS les services
+# Profil : prod
+# Activer : SPRING_PROFILES_ACTIVE=prod
+# ============================================================
+
+# Actuator restreint en production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logs moins verbeux en production
+logging:
+  level:
+    root: WARN
+    com.plateforme: INFO
+    org.springframework.security: WARN
+    org.springframework.cloud: WARN

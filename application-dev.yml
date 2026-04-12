@@ -1,0 +1,23 @@
+# ============================================================
+# application-dev.yml — Surcharges communes à TOUS les services
+# Profil : dev
+# Activer : SPRING_PROFILES_ACTIVE=dev
+# ============================================================
+
+# Actuator ouvert en dev (pratique pour déboguer)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,mappings
+  endpoint:
+    health:
+      show-details: always
+
+# Logs verbeux en dev
+logging:
+  level:
+    root: INFO
+    com.plateforme: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.cloud.gateway: DEBUG
