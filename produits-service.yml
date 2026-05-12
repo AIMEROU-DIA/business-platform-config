@@ -1,39 +1,45 @@
 # ============================================================
-# produits-service.yml
-# Configuration centralisée pour MS-02 (Service Produits)
-# Gestion : catalogue produits, catégories, images, recherche
+# produits-service.yml — MS-02 : Catalogue produits (port 8082)
+#
+# Variables d'environnement :
+#   SERVER_PORT         : port d'écoute          (défaut: 8082)
+#   BDD_HOTE            : hôte PostgreSQL          (local: localhost | Docker: postgres-produits)
+#   BDD_PORT            : port PostgreSQL           (défaut: 5432)
+#   BDD_NOM             : nom de la base            (défaut: produits_db)
+#   BDD_UTILISATEUR     : utilisateur PostgreSQL     (défaut: postgres)
+#   BDD_MOT_DE_PASSE    : mot de passe PostgreSQL    (défaut: postgres)
+#   ELASTICSEARCH_URI   : URI Elasticsearch          (local: http://localhost:9200 | Docker: http://elasticsearch:9200)
+#   REDIS_HOST          : hôte Redis                 (local: localhost | Docker: redis)
+#   REDIS_PORT          : port Redis                 (défaut: 6379)
+#   SWAGGER_ENABLED     : activer Swagger UI          (défaut: true — mettre false en prod)
 # ============================================================
 
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
 
 spring:
   application:
     name: produits-service
 
-  # ──────────────────────────────────────────────────────────
-  # BASE DE DONNÉES — PostgreSQL
-  # ──────────────────────────────────────────────────────────
   datasource:
     url: jdbc:postgresql://${BDD_HOTE:localhost}:${BDD_PORT:5432}/${BDD_NOM:produits_db}
     username: ${BDD_UTILISATEUR:postgres}
     password: ${BDD_MOT_DE_PASSE:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
-      connection-timeout: 30000
+      pool-name: HikariPool-Produits
       maximum-pool-size: 10
       minimum-idle: 2
+      connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
 
-  # ──────────────────────────────────────────────────────────
-  # JPA / HIBERNATE
-  # ──────────────────────────────────────────────────────────
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
@@ -42,11 +48,7 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
-    open-in-view: false
 
-  # ──────────────────────────────────────────────────────────
-  # FLYWAY — Migrations automatiques
-  # ──────────────────────────────────────────────────────────
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -54,17 +56,11 @@ spring:
     locations: classpath:db/migration
     schemas: public
 
-  # ──────────────────────────────────────────────────────────
-  # ELASTICSEARCH
-  # ──────────────────────────────────────────────────────────
   elasticsearch:
-    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
     connection-timeout: 5s
     socket-timeout: 30s
 
-  # ──────────────────────────────────────────────────────────
-  # REDIS (CACHE)
-  # ──────────────────────────────────────────────────────────
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -80,12 +76,9 @@ spring:
   cache:
     type: redis
     redis:
-      time-to-live: 3600000  # 1 heure (en millisecondes)
+      time-to-live: 3600000
       cache-null-values: false
 
-# ──────────────────────────────────────────────────────────
-# EUREKA CLIENT
-# ──────────────────────────────────────────────────────────
 eureka:
   client:
     service-url:
@@ -94,17 +87,28 @@ eureka:
     register-with-eureka: true
   instance:
     prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    health-check-url-path: /actuator/health
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 
-# ──────────────────────────────────────────────────────────
-# ACTUATOR — ENDPOINTS DE SANTÉ
-# ──────────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    enabled: ${SWAGGER_ENABLED:true}
+    display-request-duration: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: false
+  use-fqn: false
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics
   endpoint:
     health:
       show-details: always
@@ -115,15 +119,21 @@ management:
       enabled: true
     readinessState:
       enabled: true
+  info:
+    env:
+      enabled: true
 
-# ──────────────────────────────────────────────────────────
-# LOGGING
-# ──────────────────────────────────────────────────────────
+info:
+  app:
+    name: MS-02 – Service Produits
+    version: 1.0.0
+    description: Catalogue produits, catégories, favoris et recherche Elasticsearch
+
 logging:
   level:
     root: INFO
     com.plateforme.produits: DEBUG
-    org.springframework.data.elasticsearch: DEBUG
+    org.springframework.data.elasticsearch: INFO
     org.hibernate.SQL: OFF
     org.hibernate.type.descriptor.sql.BasicBinder: OFF
   pattern:

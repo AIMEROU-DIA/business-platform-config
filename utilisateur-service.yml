@@ -1,5 +1,25 @@
-# Configuration Utilisateur Service - Teranga Biz Platform
-# À placer dans le dépôt GitHub : configurations-teranga-biz/utilisateur-service.yml
+# ============================================================
+# utilisateur-service.yml — MS-01 : Authentification & Profils (port 8081)
+#
+# Variables d'environnement :
+#   SERVER_PORT         : port d'écoute           (défaut: 8081)
+#   BDD_HOTE            : hôte PostgreSQL           (local: localhost | Docker: postgres-utilisateurs)
+#   BDD_PORT            : port PostgreSQL            (défaut: 5432)
+#   BDD_NOM             : nom de la base             (défaut: utilisateurs_db)
+#   BDD_UTILISATEUR     : utilisateur PostgreSQL      (défaut: postgres)
+#   BDD_MOT_DE_PASSE    : mot de passe PostgreSQL     (défaut: postgres)
+#   JWT_SECRET          : clé secrète JWT (OBLIGATOIRE — même valeur que api-gateway)
+#   SMTP_HOST           : hôte SMTP                  (défaut: smtp.sendgrid.net)
+#   SMTP_PORT           : port SMTP                  (défaut: 587)
+#   SMTP_USERNAME       : identifiant SMTP            (défaut: apikey pour SendGrid)
+#   SMTP_PASSWORD       : mot de passe / clé API SMTP (OBLIGATOIRE en prod)
+#   EMAIL_FROM          : adresse expéditeur          (défaut: noreply@teranga-biz.com)
+#   OTP_FOURNISSEUR     : canal OTP                   (défaut: console | prod: email ou twilio)
+#   TWILIO_COMPTE_SID   : SID compte Twilio            (si OTP_FOURNISSEUR=twilio)
+#   TWILIO_JETON_AUTH   : jeton auth Twilio            (si OTP_FOURNISSEUR=twilio)
+#   TWILIO_NUMERO       : numéro expéditeur Twilio     (si OTP_FOURNISSEUR=twilio)
+#   SWAGGER_ENABLED     : activer Swagger UI            (défaut: true — mettre false en prod)
+# ============================================================
 
 server:
   port: ${SERVER_PORT:8081}
@@ -8,18 +28,17 @@ spring:
   application:
     name: utilisateur-service
 
-  # ===== BASE DE DONNÉES =====
   datasource:
-    url: jdbc:postgresql://${BDD_HOTE:postgres-utilisateurs}:${BDD_PORT:5432}/${BDD_NOM:utilisateurs_db}
+    url: jdbc:postgresql://${BDD_HOTE:localhost}:${BDD_PORT:5432}/${BDD_NOM:utilisateurs_db}
     username: ${BDD_UTILISATEUR:postgres}
     password: ${BDD_MOT_DE_PASSE:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
+      pool-name: HikariPool-Utilisateurs
       maximum-pool-size: 10
       minimum-idle: 5
       connection-timeout: 30000
       idle-timeout: 600000
-      pool-name: HikariPool-Utilisateurs
 
   jpa:
     hibernate:
@@ -31,26 +50,20 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         default_schema: public
 
-  # ===== FLYWAY – migrations automatiques =====
   flyway:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
     schemas: public
 
-  # ===== EMAIL – Configuration SMTP =====
-  # Pour PRODUCTION, utilisez un service SMTP professionnel :
-  # - SendGrid (recommandé) : https://sendgrid.com
-  # - AWS SES : https://aws.amazon.com/ses
-  # - Mailgun : https://www.mailgun.com
-  # - Brevo (ex-Sendinblue) : https://www.brevo.com
-  # 
-  # Pour DÉVELOPPEMENT : les emails s'affichent dans les logs
+  # ── Email SMTP ─────────────────────────────────────────────
+  # Fournisseurs recommandés : SendGrid, Brevo, AWS SES, Mailgun
+  # En développement : les emails s'affichent dans les logs (OTP_FOURNISSEUR=console)
   mail:
     host: ${SMTP_HOST:smtp.sendgrid.net}
     port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:apikey}  # Pour SendGrid, toujours "apikey"
-    password: ${SMTP_PASSWORD:}  # Votre clé API SendGrid
+    username: ${SMTP_USERNAME:apikey}
+    password: ${SMTP_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -62,34 +75,33 @@ spring:
           timeout: 5000
           writetimeout: 5000
         from: ${EMAIL_FROM:noreply@teranga-biz.com}
-        test-connection: false  # false en dev pour éviter erreurs au démarrage
+        test-connection: false
 
-# ===== SPRINGDOC OPENAPI / SWAGGER =====
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui/index.html
-    enabled: true
-    display-request-duration: true
-    operations-sorter: method
-    tags-sorter: alpha
-  show-actuator: false
-  use-fqn: false
-
-# ===== EUREKA – enregistrement du service =====
 eureka:
   client:
     service-url:
-      defaultZone: http://${EUREKA_HOTE:eureka-server}:${EUREKA_PORT:8761}/eureka/
+      defaultZone: http://${EUREKA_HOTE:localhost}:${EUREKA_PORT:8761}/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}
     health-check-url-path: /actuator/health
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
-# ===== ACTUATOR =====
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    enabled: ${SWAGGER_ENABLED:true}
+    display-request-duration: true
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: false
+  use-fqn: false
+
 management:
   endpoints:
     web:
@@ -100,7 +112,7 @@ management:
       show-details: always
   health:
     mail:
-      enabled: false  # Désactive le healthcheck SMTP en dev
+      enabled: false
   info:
     env:
       enabled: true
@@ -109,32 +121,29 @@ info:
   app:
     name: MS-01 – Service Utilisateurs
     version: 1.0.0
-    description: Gestion des comptes, authentification, rôles et profils
+    description: Gestion des comptes, authentification JWT, OTP, rôles et profils
 
-# ===== JWT =====
+# ── JWT ───────────────────────────────────────────────────────
 application:
   securite:
     jwt:
-      cle-secrete: ${JWT_CLE_SECRETE}
-      expiration-jeton-acces: 900000
-      expiration-jeton-rafraichissement: 604800000
+      cle-secrete: ${JWT_SECRET}
+      expiration-jeton-acces: 900000         # 15 minutes
+      expiration-jeton-rafraichissement: 604800000  # 7 jours
 
-  # ===== OTP =====
+  # ── OTP ───────────────────────────────────────────────────
   otp:
     duree-validite-minutes: 5
     longueur: 6
     tentatives-max: 3
-    # MODE DEV : affiche l'OTP dans les logs au lieu d'envoyer un SMS
     fournisseur: ${OTP_FOURNISSEUR:console}
 
-  # ===== TWILIO (MODE PRODUCTION - commenté pour dev) =====
-  # Décommenter et configurer pour l'environnement de production
-  # twilio:
-  #   compte-sid: ${TWILIO_COMPTE_SID:}
-  #   jeton-auth: ${TWILIO_JETON_AUTH:}
-  #   numero-expediteur: ${TWILIO_NUMERO:}
+  # ── Twilio (SMS) — activer avec OTP_FOURNISSEUR=twilio ────
+  twilio:
+    compte-sid: ${TWILIO_COMPTE_SID:}
+    jeton-auth: ${TWILIO_JETON_AUTH:}
+    numero-expediteur: ${TWILIO_NUMERO:}
 
-# ===== LOGS =====
 logging:
   level:
     com.plateforme.utilisateurs: DEBUG

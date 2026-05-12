@@ -1,18 +1,20 @@
 # ============================================================
-# api-gateway.yml — Configuration de l'API Gateway
-# Dépôt : business-platform-config (GitHub)
+# api-gateway.yml — Routeur central + validation JWT (port 8080)
 #
-# Ce fichier est distribué par le config-server à api-gateway
-# au démarrage. Il complète application.yml.
+# Variables d'environnement :
+#   JWT_SECRET            : clé secrète JWT (OBLIGATOIRE — même valeur que utilisateur-service)
+#   SERVER_PORT           : port d'écoute (défaut: 8080)
+#
+# CORS en production :
+#   Décommenter les lignes du domaine de production dans la section globalcors
 #
 # AJOUTER UN MICROSERVICE :
-# 1. Ajouter un bloc dans la section routes ci-dessous
-# 2. Pousser sur GitHub
-# 3. La gateway se met à jour automatiquement (pas de rebuild)
+#   1. Ajouter un bloc dans la section routes
+#   2. Pousser sur GitHub — rechargement automatique sans rebuild
 # ============================================================
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
@@ -21,45 +23,40 @@ spring:
   cloud:
     gateway:
 
-      # ── Découverte automatique via Eureka ─────────────────
-      # Crée automatiquement une route pour chaque service Eureka
-      # accessible via /NOM-SERVICE-EN-MINUSCULE/**
+      # Crée automatiquement une route /nom-service/** pour chaque service Eureka
       discovery:
         locator:
           enabled: true
           lower-case-service-id: true
 
-      # ── Routes explicites MVP Phase 1 ─────────────────────
-      # lb:// = Load Balancer via Eureka (résolution dynamique)
       routes:
 
-        # MS-01 — Utilisateurs & Authentification : Endpoints publics
-        # /api/auth/** : inscription, connexion, mot de passe oublié
+        # MS-01 — Authentification (endpoints publics)
         - id: utilisateur-service-auth
           uri: lb://utilisateur-service
           predicates:
             - Path=/api/auth/**
           order: 1
 
-        # MS-01 — Utilisateurs : Profils et opérations utilisateurs
+        # MS-01 — Profils & gestion des utilisateurs
         - id: utilisateur-service-users
           uri: lb://utilisateur-service
           predicates:
             - Path=/api/utilisateurs/**
           order: 2
 
-        # MS-01 — Administration : ADMIN et SUPER_ADMIN uniquement
+        # MS-01 — Administration (ADMIN / SUPER_ADMIN)
         - id: utilisateur-service-admin
           uri: lb://utilisateur-service
           predicates:
             - Path=/api/admin/**
           order: 3
 
-        # MS-02 — Produits & Catalogue
+        # MS-02 — Produits, Catégories, Favoris, Recherche
         - id: produits-service
           uri: lb://produits-service
           predicates:
-            - Path=/api/produits/**
+            - Path=/api/produits/**,/api/categories/**,/api/favoris/**,/api/recherche/**
           order: 4
 
         # MS-03 — Boutiques
@@ -97,14 +94,16 @@ spring:
             - Path=/api/avis/**
           order: 9
 
-      # ── CORS — autorise le frontend React ─────────────────
-      # Note : Postman n'envoie pas d'Origin, donc pas de problème CORS avec Postman
+      # ── CORS — Frontend React ────────────────────────────────
       globalcors:
         cors-configurations:
           '[/**]':
             allowedOriginPatterns:
               - 'http://localhost:*'
               - 'http://127.0.0.1:*'
+              # Production — décommenter avec le vrai domaine :
+              # - 'https://teranga-biz.com'
+              # - 'https://www.teranga-biz.com'
             allowedMethods:
               - GET
               - POST
@@ -116,10 +115,9 @@ spring:
             allowCredentials: true
             maxAge: 3600
             exposedHeaders:
-              - 'Authorization'
-              - 'Content-Type'
+              - Authorization
+              - Content-Type
 
-# ── Actuator ─────────────────────────────────────────────────
 management:
   endpoints:
     web:
@@ -129,37 +127,14 @@ management:
     gateway:
       enabled: true
 
-# ============================================================
-# SÉCURITÉ JWT — Validation centralisée au Gateway
-# ============================================================
-#
-# La gateway valide le JWT UNE SEULE fois et injecte les
-# informations d'identité dans des headers HTTP enrichis :
-#
-#   X-User-Id         → 550e8400-e29b-41d4-a716-446655440000
-#   X-User-Phone      → 773456789
-#   X-User-Roles      → UTILISATEUR,VENDEUR
-#   X-User-Permissions → LIRE_PRODUIT,CREER_PRODUIT
-#
-# Les microservices lisent ces headers pour configurer le
-# SecurityContext (via le module commun-securite).
-#
-# IMPORTANT :
-# - La clé secrète DOIT être LA MÊME que celle de utilisateur-service
-# - Variable d'environnement JWT_SECRET recommandée en production
-# ============================================================
-
+# ── Sécurité JWT ─────────────────────────────────────────────
+# La gateway valide le JWT une seule fois et injecte :
+#   X-User-Id, X-User-Phone, X-User-Roles, X-User-Permissions
+# Les microservices lisent ces headers via commun-securite.
 application:
   securite:
     jwt:
-      # Clé secrète pour valider la signature JWT
-      # DOIT être identique à celle de utilisateur-service
-      # En production : utiliser la variable d'environnement ${JWT_SECRET}
-      cle-secrete: "${JWT_SECRET}"
-
-      # Routes publiques (pas d'authentification requise)
-      # Syntaxe : chemins séparés par des virgules
-      # Wildcards supportés : /* et /**
+      cle-secrete: ${JWT_SECRET}
       routes-publiques:
         /api/auth/inscription,
         /api/auth/inscription/verifier-otp,
@@ -168,32 +143,15 @@ application:
         /api/auth/jeton-rafraichissement,
         /api/auth/mot-de-passe-oublie,
         /api/auth/reinitialiser-mot-de-passe,
+        /api/produits,
+        /api/categories,
+        /api/categories/**,
+        /api/recherche/**,
         /api/boutiques,
         /api/boutiques/recherche,
         /api/boutiques/slug/**,
         /actuator/**
 
-# ============================================================
-# NOTES DE CONFIGURATION
-# ============================================================
-#
-# AJOUTER UNE ROUTE PUBLIQUE :
-# Ajouter le chemin dans application.securite.jwt.routes-publiques
-#
-# TESTER LE FILTRE JWT :
-# 1. Sans token : curl http://localhost:8080/api/produits
-#    → 401 Unauthorized
-#
-# 2. Avec token invalide : curl -H "Authorization: Bearer abc123"
-#    → 401 Unauthorized
-#
-# 3. Avec token valide :
-#    curl -H "Authorization: Bearer <JWT_valide>" http://localhost:8080/api/produits
-#    → Les headers X-User-* sont ajoutés à la requête vers le microservice
-#
-# LOGS :
-# Activer les logs debug du filtre :
-# logging:
-#   level:
-#     com.platform.gateway.security: DEBUG
-# ============================================================
+logging:
+  level:
+    com.plateforme.gateway: DEBUG

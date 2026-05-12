@@ -1,39 +1,38 @@
 # ============================================================
-# eureka-server.yml — Configuration d'eureka-server
-# Dépôt : business-platform-config (GitHub)
+# eureka-server.yml — Registre de découverte de services (port 8761)
 #
-# Ce fichier est distribué par le config-server à eureka-server
-# au démarrage. Il complète application.yml.
+# Variables d'environnement :
+#   SERVER_PORT      : port d'écoute (défaut: 8761)
+#   EUREKA_HOSTNAME  : nom d'hôte du serveur Eureka
+#                      (local: localhost | Docker: eureka-server)
 # ============================================================
 
 server:
-  port: 8761
+  port: ${SERVER_PORT:8761}
 
 spring:
   application:
     name: eureka-server
 
-# ── Paramètres Eureka Server ─────────────────────────────────
 eureka:
   instance:
-    hostname: eureka-server
+    hostname: ${EUREKA_HOSTNAME:localhost}
   client:
     # Eureka ne s'enregistre pas chez lui-même
-    registerWithEureka: false
-    fetchRegistry: false
-    serviceUrl:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
   server:
-    # Désactiver en développement — activer en production
     enable-self-preservation: false
-    # Délai avant d'expulser un service non joignable (ms)
     eviction-interval-timer-in-ms: 5000
-    # Pas d'attente au démarrage si le registre est vide
     wait-time-in-ms-when-sync-empty: 0
 
-# ── Actuator ─────────────────────────────────────────────────
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+  endpoint:
+    health:
+      show-details: always

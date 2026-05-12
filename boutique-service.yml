@@ -1,16 +1,14 @@
 # ============================================================
-# boutique-service.yml — Configuration centralisée pour MS-03
-# Dépôt : configurations-teranga-biz (GitHub)
+# boutique-service.yml — MS-03 : Boutiques personnalisées (port 8083)
 #
-# Ce fichier est distribué par le config-server à boutique-service
-# au démarrage. Il complète application.yml.
-#
-# Fonctionnalités :
-#   - Création et gestion des boutiques personnalisées des vendeurs
-#   - Slug URL unique généré automatiquement
-#   - Thèmes, couleurs, logo, bannière personnalisables
-#   - Cycle de vie : EN_ATTENTE → ACTIVE → SUSPENDUE / FERMEE
-#   - Maximum 3 boutiques par vendeur
+# Variables d'environnement :
+#   SERVER_PORT       : port d'écoute        (défaut: 8083)
+#   BDD_HOTE          : hôte PostgreSQL       (local: localhost | Docker: postgres-boutiques)
+#   BDD_PORT          : port PostgreSQL        (défaut: 5432)
+#   BDD_NOM           : nom de la base         (défaut: boutiques_db)
+#   BDD_UTILISATEUR   : utilisateur PostgreSQL  (défaut: postgres)
+#   BDD_MOT_DE_PASSE  : mot de passe PostgreSQL (défaut: postgres)
+#   SWAGGER_ENABLED   : activer Swagger UI      (défaut: true — mettre false en prod)
 # ============================================================
 
 server:
@@ -20,11 +18,8 @@ spring:
   application:
     name: boutique-service
 
-  # ──────────────────────────────────────────────────────────
-  # BASE DE DONNÉES — PostgreSQL dédié à boutique-service
-  # ──────────────────────────────────────────────────────────
   datasource:
-    url: jdbc:postgresql://${BDD_HOTE:postgres-boutiques}:${BDD_PORT:5432}/${BDD_NOM:boutiques_db}
+    url: jdbc:postgresql://${BDD_HOTE:localhost}:${BDD_PORT:5432}/${BDD_NOM:boutiques_db}
     username: ${BDD_UTILISATEUR:postgres}
     password: ${BDD_MOT_DE_PASSE:postgres}
     driver-class-name: org.postgresql.Driver
@@ -36,13 +31,11 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
-  # ──────────────────────────────────────────────────────────
-  # JPA / HIBERNATE
-  # ──────────────────────────────────────────────────────────
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
@@ -52,11 +45,7 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
-    open-in-view: false
 
-  # ──────────────────────────────────────────────────────────
-  # FLYWAY — Migrations automatiques
-  # ──────────────────────────────────────────────────────────
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -64,13 +53,10 @@ spring:
     locations: classpath:db/migration
     schemas: public
 
-# ──────────────────────────────────────────────────────────
-# EUREKA CLIENT
-# ──────────────────────────────────────────────────────────
 eureka:
   client:
     service-url:
-      defaultZone: http://${EUREKA_HOTE:eureka-server}:${EUREKA_PORT:8761}/eureka/
+      defaultZone: http://${EUREKA_HOTE:localhost}:${EUREKA_PORT:8761}/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -80,25 +66,18 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 
-# ──────────────────────────────────────────────────────────
-# SPRINGDOC OPENAPI / SWAGGER
-# Accessible via : http://localhost:8083/swagger-ui/index.html
-# ──────────────────────────────────────────────────────────
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui/index.html
-    enabled: true
+    enabled: ${SWAGGER_ENABLED:true}
     display-request-duration: true
     operations-sorter: method
     tags-sorter: alpha
   show-actuator: false
   use-fqn: false
 
-# ──────────────────────────────────────────────────────────
-# ACTUATOR
-# ──────────────────────────────────────────────────────────
 management:
   endpoints:
     web:
@@ -107,6 +86,9 @@ management:
   endpoint:
     health:
       show-details: always
+  health:
+    db:
+      enabled: true
   info:
     env:
       enabled: true
@@ -117,9 +99,6 @@ info:
     version: 1.0.0
     description: Création et gestion des mini-boutiques personnalisées des vendeurs
 
-# ──────────────────────────────────────────────────────────
-# LOGGING
-# ──────────────────────────────────────────────────────────
 logging:
   level:
     com.plateforme.boutiques: DEBUG
