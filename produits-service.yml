@@ -79,6 +79,17 @@ spring:
       time-to-live: 3600000
       cache-null-values: false
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+app:
+  upload:
+    dir: ${UPLOAD_DIR:/app/uploads/produits}
+    url-base: ${UPLOAD_URL_BASE:/images/produits}
+
 eureka:
   client:
     service-url:

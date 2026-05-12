@@ -59,6 +59,13 @@ spring:
             - Path=/api/produits/**,/api/categories/**,/api/favoris/**,/api/recherche/**
           order: 4
 
+        # MS-02 — Images produits (fichiers statiques)
+        - id: produits-service-images
+          uri: lb://produits-service
+          predicates:
+            - Path=/images/**
+          order: 4
+
         # MS-03 — Boutiques
         - id: boutique-service
           uri: lb://boutique-service
@@ -147,6 +154,7 @@ application:
         /api/categories,
         /api/categories/**,
         /api/recherche/**,
+        /images/**,
         /api/boutiques,
         /api/boutiques/recherche,
         /api/boutiques/slug/**,
